@@ -32,5 +32,6 @@ jobs:
         publish_dir: ./rss
         publish_branch: gh-pages
         force_orphan: true
-
+        user_name: masahirofumon
+        user_email: masahiro@example.com
 
