@@ -12,24 +12,28 @@ def fetch_articles():
     res = requests.get(BASE_URL, headers={"User-Agent": "Mozilla/5.0"})
     soup = BeautifulSoup(res.content, "html.parser")
 
-    # デバッグ用にHTMLを保存（任意）
-    with open("dime_debug.html", "w", encoding="utf-8") as f:
-        f.write(soup.prettify())
-
     items = soup.select("li.entryList_item")
     articles = []
 
     for item in items[:10]:
         link_tag = item.select_one("a.entryList_item_link")
-        title_tag = item.select_one("p.entryList_item_title")
         date_tag = item.select_one("span.entryList_item_date")
 
-        if not (link_tag and title_tag and date_tag):
+        if not (link_tag and date_tag):
             continue
 
         link = link_tag["href"]
-        title = title_tag.get_text(strip=True)
         date_str = date_tag.get_text(strip=True)
+
+        # ✅ 記事ページにアクセスして <h1> を取得
+        try:
+            article_res = requests.get(link, headers={"User-Agent": "Mozilla/5.0"})
+            article_soup = BeautifulSoup(article_res.content, "html.parser")
+            h1_tag = article_soup.find("h1")
+            title = h1_tag.get_text(strip=True) if h1_tag else "(no title)"
+        except Exception as e:
+            print(f"記事ページの取得失敗: {link} → {e}")
+            title = "(no title)"
 
         try:
             pub_date = datetime.strptime(date_str, "%Y.%m.%d").replace(tzinfo=timezone.utc)
